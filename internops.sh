@@ -472,18 +472,48 @@ cmd_test() {
 # Shows configured AI providers + runs a sample chat through the backend.
 cmd_ai() {
   step "AI provider status"
-  local container=""
+  local base="http://localhost:5000"
+  local use_docker=0
   if dc ps --format json 2>/dev/null | python3 -c "import sys,json; d=json.loads(sys.stdin.read() or '[]'); print('ok' if any(s['Service']=='backend' for s in d) else 'no')" 2>/dev/null | grep -q "^ok$"; then
-    container="backend"
-  else
-    err "Backend not running. Try: ./internops.sh up"
+    use_docker=1
+  elif ! curl -fsS "$base/health" >/dev/null 2>&1; then
+    err "Backend not running. Try: ./internops.sh up (or start dev backend on :5000)"
     return 1
   fi
 
-  # Provider chain
-  info "Configured provider chain:"
-  if ! dc exec -T "$container" curl -s http://localhost:5000/api/ai/providers 2>/dev/null \
-      | python3 -c "
+  # Provider chain (login first to get JWT — endpoint is auth-protected)
+  local token
+  if [[ $use_docker -eq 1 ]]; then
+    token=$(dc exec -T "$container" curl -s -X POST http://localhost:5000/api/auth/login \
+      -H "Content-Type: application/json" \
+      -d '{"email":"admin@internops.com","password":"Admin@123"}' 2>/dev/null \
+      | python3 -c "import sys,json; print(json.load(sys.stdin).get('accessToken',''))" 2>/dev/null)
+    provider_json=$(dc exec -T "$container" curl -s -H "Authorization: Bearer $token" \
+      http://localhost:5000/api/ai/providers 2>/dev/null)
+  else
+    token=$(curl -fsS -c /tmp/quintern-cookies.txt -X POST "$base/api/auth/login" \
+      -H "Content-Type: application/json" \
+      -d '{"email":"admin@internops.com","password":"Admin@123"}' 2>/dev/null \
+      | python3 -c "import sys,json; print(json.load(sys.stdin).get('accessToken',''))" 2>/dev/null)
+    provider_json=$(curl -fsS -b /tmp/quintern-cookies.txt -H "Authorization: Bearer $token" \
+      "$base/api/ai/providers" 2>/dev/null)
+  fi
+  if [[ -z "$token" ]]; then
+    err "Could not get auth token (login failed)"
+    return 1
+  fi
+
+  # Get CSRF token for the sample chat (AI endpoint requires it)
+  local csrf
+  if [[ $use_docker -eq 1 ]]; then
+    csrf=$(dc exec -T "$container" curl -s -b /tmp/quintern-cookies.txt \
+      http://localhost:5000/api/auth/csrf-token 2>/dev/null \
+      | python3 -c "import sys,json; print(json.load(sys.stdin).get('csrfToken',''))" 2>/dev/null)
+  else
+    csrf=$(curl -fsS -b /tmp/quintern-cookies.txt "$base/api/auth/csrf-token" 2>/dev/null \
+      | python3 -c "import sys,json; print(json.load(sys.stdin).get('csrfToken',''))" 2>/dev/null)
+  fi
+  if ! echo "$provider_json" | python3 -c "
 import sys, json
 try:
     d = json.loads(sys.stdin.read())
@@ -500,16 +530,26 @@ except Exception as e:
   step "Sample chat"
   info "POST /api/ai/assistant { message: 'What is the rating scale used here?' }"
   local out
-  out=$(dc exec -T "$container" curl -s -X POST http://localhost:5000/api/ai/assistant \
-    -H "Content-Type: application/json" \
-    -d '{"message":"What is the rating scale used here?","role":"ADMIN","history":[]}' 2>&1) || true
+  if [[ $use_docker -eq 1 ]]; then
+    out=$(dc exec -T "$container" curl -s -X POST http://localhost:5000/api/ai/assistant \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer $token" \
+      -H "X-CSRF-Token: $csrf" \
+      -d '{"message":"What is the rating scale used here?","role":"ADMIN","history":[]}' 2>&1) || true
+  else
+    out=$(curl -s -b /tmp/quintern-cookies.txt -X POST "$base/api/ai/assistant" \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer $token" \
+      -H "X-CSRF-Token: $csrf" \
+      -d '{"message":"What is the rating scale used here?","role":"ADMIN","history":[]}' 2>&1) || true
+  fi
   echo "$out" | python3 -c "
 import sys, json
 try:
     d = json.loads(sys.stdin.read())
     a = d.get('answer','')
-    print(f'  ${C_BOLD}provider:${C_RESET}  {d.get(\"provider\",\"?\")}  ${C_BOLD}model:${C_RESET} {d.get(\"model\",\"?\")}  ${C_BOLD}latency:${C_RESET} {d.get(\"latencyMs\",0)}ms')
-    print(f'  ${C_BOLD}answer:${C_RESET}')
+    print(f'  provider: {d.get(\"provider\",\"?\")}  model: {d.get(\"model\",\"?\")}  latency: {d.get(\"latencyMs\",0)}ms')
+    print(f'  answer:')
     for line in a.splitlines()[:6]:
         print('   ', line)
 except Exception as e:
@@ -525,8 +565,11 @@ except Exception as e:
 cmd_demo() {
   step "Demo: end-to-end against the live stack"
   if ! dc ps --format json 2>/dev/null | python3 -c "import sys,json; d=json.loads(sys.stdin.read() or '[]'); sys.exit(0 if any(s['Service']=='backend' for s in d) else 1)" 2>/dev/null; then
-    err "Backend not running. Try: ./internops.sh up"
-    return 1
+    if ! curl -fsS http://localhost:5000/health >/dev/null 2>&1; then
+      err "Backend not running. Try: ./internops.sh up (or start dev backend on :5000)"
+      return 1
+    fi
+    info "Dev backend detected on :5000 (not in docker)"
   fi
 
   local base="http://localhost:5000/api"
