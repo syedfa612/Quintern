@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+
+    <title>Uptoskills · Workforce Platform</title>
+    <meta name="description" content="Uptoskills is the home of structured intern programs — onboarding, attendance, ratings, project delivery, and team operations in one secure place." />
+    <meta name="application-name" content="InternOps" />
+    <meta name="apple-mobile-web-app-title" content="InternOps" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Uptoskills · Workforce Platform" />
+    <meta property="og:description" content="Uptoskills is the home of structured intern programs — onboarding, attendance, ratings, project delivery, and team operations." />
+    <meta property="og:type" content="website" />
+
+    <!-- Icons. SVG first (sharp at any DPI), ico fallback. Both resolve to the
+         same brand mark so the browser tab and bookmark both look right. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- PWA manifest. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!--
+      Font strategy: ship a first-class system-font stack so the app paints
+      instantly with no network dependency. The Inter family is loaded
+      async and lazily swaps in once available — `font-display: swap`
+      in the stack below keeps the layout stable during the swap.
+      This means the app works fully offline, behind firewalls, or in
+      headless environments (CI, audit scripts) where Google Fonts is
+      unreachable.
+    -->
+
+
+    <!-- Preconnect to the API origin so the first request lands fast. -->
+    <link rel="preconnect" href="http://localhost:5000" crossorigin />
+
+    <!-- Inline theme + accent apply before first paint to avoid a flash. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) { /* SSR / private mode */ }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <div style="font-family:system-ui,sans-serif;padding:2rem;text-align:center;color:#18181b;background:#fafafa;min-height:100vh">
+        <h1 style="font-size:1.5rem;margin:0 0 0.5rem">JavaScript is required</h1>
+        <p style="color:#71717a;margin:0">InternOps is a SPA — please enable JavaScript and reload.</p>
+      </div>
+    </noscript>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
