@@ -6,17 +6,29 @@
     "sourceType": "module",
     "ecmaFeatures": { "jsx": true }
   },
-  "extends": ["eslint:recommended"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:react/jsx-runtime"
+  ],
+  "settings": {
+    "react": { "version": "detect" }
+  },
   "rules": {
     "no-unused-vars": [
       "warn",
-      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
     ],
     "no-undef": "warn",
     "no-console": "off",
     "no-empty": ["error", { "allowEmptyCatch": true }],
     "prefer-const": "warn",
-    "eqeqeq": ["error", "smart"]
+    "eqeqeq": ["error", "smart"],
+    "react/prop-types": "off",
+    "react/no-unescaped-entities": "off"
   },
   "overrides": [
     {
