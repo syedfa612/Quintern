@@ -177,6 +177,66 @@ async function callDeepSeek({ system, messages }) {
 // ============================================================================
 //  PROVIDER 4 — Anthropic Claude
 // ============================================================================
+// ============================================================================
+//  PROVIDER 3.5 — OpenAI (GPT-4o-mini default; OpenAI-compatible)
+// ============================================================================
+async function callOpenAI({ system, messages }) {
+  if (!config.ai.openaiKey) throw new Error('openai-no-key');
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${config.ai.openaiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.ai.openaiModel || 'gpt-4o-mini',
+      max_tokens: 1000,
+      temperature: 0.4,
+      messages: [{ role: 'system', content: system }, ...messages],
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`openai-${res.status} ${body.slice(0, 80)}`);
+  }
+  const data = await res.json();
+  return {
+    text: (data.choices?.[0]?.message?.content || '').trim(),
+    model: data.model || config.ai.openaiModel,
+  };
+}
+
+// ============================================================================
+//  PROVIDER 3.6 — HuggingFace Inference API (OpenAI-compatible router)
+// ============================================================================
+async function callHuggingFace({ system, messages }) {
+  if (!config.ai.huggingfaceKey) throw new Error('hf-no-key');
+  const model =
+    config.ai.huggingfaceModel || 'meta-llama/Meta-Llama-3-8B-Instruct';
+  const res = await fetch('https://router.huggingface.co/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${config.ai.huggingfaceKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 800,
+      temperature: 0.4,
+      messages: [{ role: 'system', content: system }, ...messages],
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`hf-${res.status} ${body.slice(0, 80)}`);
+  }
+  const data = await res.json();
+  return {
+    text: (data.choices?.[0]?.message?.content || '').trim(),
+    model,
+  };
+}
+
 async function callAnthropic({ system, messages }) {
   if (!config.ai.anthropicKey) throw new Error('anthropic-no-key');
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -309,6 +369,12 @@ async function callHeuristic({ role, message, history = [] }) {
 const PROVIDER_CHAIN = [
   { name: 'groq', fn: callGroq, needs: () => !!config.ai.groqKey },
   { name: 'gemini', fn: callGemini, needs: () => !!config.ai.geminiKey },
+  { name: 'openai', fn: callOpenAI, needs: () => !!config.ai.openaiKey },
+  {
+    name: 'huggingface',
+    fn: callHuggingFace,
+    needs: () => !!config.ai.huggingfaceKey,
+  },
   { name: 'deepseek', fn: callDeepSeek, needs: () => !!config.ai.deepseekKey },
   {
     name: 'anthropic',
@@ -433,4 +499,13 @@ module.exports = {
   ask,
   askSummary,
   PROVIDERS: PROVIDER_CHAIN.map((p) => p.name),
+  // Exported for diagnostic / test scripts
+  callGroq,
+  callGemini,
+  callDeepSeek,
+  callOpenAI,
+  callHuggingFace,
+  callAnthropic,
+  callFastAPI,
+  callHeuristic,
 };

@@ -114,9 +114,13 @@ async function routes(fastify) {
       chain: PROVIDERS,
       has_groq: !!require('../../config').ai.groqKey,
       has_gemini: !!require('../../config').ai.geminiKey,
+      has_openai: !!require('../../config').ai.openaiKey,
       has_deepseek: !!require('../../config').ai.deepseekKey,
       has_anthropic: !!require('../../config').ai.anthropicKey,
-      has_hf: !!require('../../config').ai.huggingfaceToken,
+      has_hf: !!(
+        require('../../config').ai.huggingfaceKey ||
+        require('../../config').ai.huggingfaceToken
+      ),
       has_fastapi: !!require('../../config').ai.fastapiUrl,
     };
   });

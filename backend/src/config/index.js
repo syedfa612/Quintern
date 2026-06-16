@@ -45,11 +45,27 @@ module.exports = {
     timeout: parseInt(process.env.AI_TIMEOUT, 10) || 25000,
     groqKey: process.env.GROQ_API_KEY,
     openaiKey: process.env.OPENAI_API_KEY,
+    openaiModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
     geminiKey: process.env.GEMINI_API_KEY,
     deepseekKey: process.env.DEEPSEEK_API_KEY,
     deepseekBaseUrl: process.env.DEEPSEEK_BASE_URL,
-    huggingfaceToken: process.env.HUGGINGFACE_TOKEN,
+    huggingfaceKey:
+      process.env.HUGGINGFACE_API_KEY || process.env.HUGGINGFACE_TOKEN,
+    huggingfaceModel:
+      process.env.HUGGINGFACE_MODEL || 'meta-llama/Meta-Llama-3-8B-Instruct',
     anthropicKey: process.env.ANTHROPIC_API_KEY,
+  },
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY,
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+  },
+  cloudinary: {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    apiSecret: process.env.CLOUDINARY_API_SECRET,
+    folder: process.env.CLOUDINARY_FOLDER || 'quintern',
+    secure: process.env.CLOUDINARY_SECURE !== 'false',
   },
   uptoskills: {
     baseUrl: process.env.UPTOSKILLS_BASE_URL || '',
@@ -74,5 +90,12 @@ module.exports = {
   rateLimit: {
     global: parseInt(process.env.RATE_LIMIT_GLOBAL, 10) || 1000,
     auth: parseInt(process.env.RATE_LIMIT_AUTH, 10) || 10,
+  },
+  socket: {
+    path: process.env.SOCKET_PATH || '/socket.io',
+    cors:
+      process.env.SOCKET_CORS ||
+      process.env.CORS_ORIGIN ||
+      'http://localhost:5173',
   },
 };
