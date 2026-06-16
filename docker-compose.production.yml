@@ -22,7 +22,7 @@ x-logging: &default-logging
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: internops-postgres
     restart: unless-stopped
     logging: *default-logging

@@ -5,13 +5,13 @@
 # artifacts, no .git, no test fixtures.
 # =============================================================================
 
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 WORKDIR /app
 RUN apk add --no-cache python3 make g++ openssl
 COPY package*.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 
-FROM node:20-alpine AS runtime
+FROM node:24-alpine AS runtime
 WORKDIR /app
 # Run as a non-root user. The official Node image ships with `node` user.
 RUN apk add --no-cache curl openssl tini

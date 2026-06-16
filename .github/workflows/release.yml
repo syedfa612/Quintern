@@ -38,7 +38,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
           cache: 'npm'
 
       - name: Determine tag
@@ -66,7 +66,7 @@ jobs:
         run: |
           cd backend
           # Spin up a throwaway Postgres just for the gate
-          docker run -d --name pg-gate -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=release_gate -p 5432:5432 postgres:14
+          docker run -d --name pg-gate -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=release_gate -p 5432:5432 postgres:18
           for i in $(seq 1 30); do pg_isready -h localhost -p 5432 -U postgres && break; sleep 1; done
           npm run migrate
           npm test -- --forceExit --detectOpenHandles --runInBand

@@ -26,7 +26,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:14
+        image: postgres:18
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -57,7 +57,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: |
             backend/package-lock.json
@@ -121,7 +121,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:14
+        image: postgres:18
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -155,7 +155,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
@@ -173,7 +173,7 @@ jobs:
       - name: Run migrations on smoke DB
         run: cd backend && npm run migrate
 
-      - name: Seed smoke DB (creates admin@internops.com / Admin@123)
+      - name: Seed smoke DB (creates admin@quintern.com / Quintern@2026)
         run: cd backend && npm run seed
 
       - name: Start backend in background
@@ -206,13 +206,16 @@ jobs:
           echo
           echo "== POST /api/auth/login (admin) =="
           RESP=$(curl -fsS -H 'Content-Type: application/json' \
-            -d '{"email":"admin@internops.com","password":"Admin@123"}' \
+            -d '{"email":"admin@quintern.com","password":"Quintern@2026"}' \
             http://localhost:5000/api/auth/login)
           TOK=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('accessToken',''))")
           test -n "$TOK" || { echo "::error::no access token in response: $RESP"; exit 1; }
           echo "Got JWT: ${TOK:0:32}..."
           echo "== GET /api/users/me =="
           curl -fsS -H "Authorization: Bearer $TOK" http://localhost:5000/api/users/me | head -c 200
+          echo
+          echo "== GET /api/ai/insights =="
+          curl -fsS -H "Authorization: Bearer $TOK" http://localhost:5000/api/ai/insights | head -c 200
           echo
           echo "✓ Smoke tests passed"
 
