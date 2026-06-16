@@ -88,6 +88,7 @@ module.exports = {
   appUrl: process.env.APP_URL || 'http://localhost:5173',
   isProduction: process.env.NODE_ENV === 'production',
   rateLimit: {
+    disabled: process.env.RATE_LIMIT_DISABLED === 'true',
     global: parseInt(process.env.RATE_LIMIT_GLOBAL, 10) || 1000,
     auth: parseInt(process.env.RATE_LIMIT_AUTH, 10) || 10,
   },

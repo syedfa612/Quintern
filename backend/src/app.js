@@ -39,10 +39,13 @@ app.register(require('@fastify/helmet'));
 app.register(require('@fastify/rate-limit'), {
   // Global per-IP ceiling. Per-route tighter limits (e.g. /api/auth/*) are
   // configured on the route itself.
-  max: config.rateLimit.global,
+  // Set RATE_LIMIT_DISABLED=true to bypass rate limiting entirely
+  // (useful for demos, recordings, local dev, load tests).
+  max: config.rateLimit.disabled ? 1_000_000 : config.rateLimit.global,
   timeWindow: '1 minute',
   // Key by IP + route to keep one noisy endpoint from starving the rest.
   keyGenerator: (req) => `${req.ip}:${req.routerPath || req.url}`,
+  skipOnError: true, // never block a real user because of a rate-limiter bug
 });
 
 app.register(require('@fastify/cookie'));
