@@ -109,11 +109,18 @@ async function refreshTokens(token, ip) {
 
   await repo.storeRefreshTokenRedis(user.id, hashToken(newRefresh), newExpiry);
 
+  await createAuditLog({
+    userId: user.id,
+    action: 'TOKEN_REFRESH',
+    ipAddress: ip,
+  });
+
   return {
     accessToken: newAccess,
     refreshToken: newRefresh,
   };
 }
+
 async function logout(token, authenticatedUserId, ip, userAgent) {
   let decoded;
 
